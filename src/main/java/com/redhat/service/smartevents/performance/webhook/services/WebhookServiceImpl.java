@@ -55,7 +55,7 @@ public class WebhookServiceImpl implements WebhookService {
     @Transactional
     public long deleteAll() {
         long deletedRows = Event.deleteAll();
-        log.info("rows deleted {}", Event.deleteAll());
+        log.info("rows deleted {}", deletedRows);
         return deletedRows;
     }
 }
