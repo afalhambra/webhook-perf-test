@@ -70,19 +70,6 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-jdbc-h2</artifactId>
     </dependency>
-    <!-- K8s dependencies -->
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-kubernetes</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-container-image-jib</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-minikube</artifactId>
-    </dependency>
     <!-- External dependencies -->
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -190,9 +177,24 @@
     <profile>
       <id>minikube</id>
       <properties>
-        <kubernetes.deployment-target>minikube</kubernetes.deployment-target>
+        <quarkus.kubernetes.deployment-target>minikube</quarkus.kubernetes.deployment-target>
         <quarkus.kubernetes.deploy>true</quarkus.kubernetes.deploy>
       </properties>
+      <dependencies>
+        <!-- K8s dependencies -->
+        <dependency>
+          <groupId>io.quarkus</groupId>
+          <artifactId>quarkus-kubernetes</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>io.quarkus</groupId>
+          <artifactId>quarkus-container-image-jib</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>io.quarkus</groupId>
+          <artifactId>quarkus-minikube</artifactId>
+        </dependency>
+      </dependencies>
     </profile>
   </profiles>
 </project>

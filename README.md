@@ -11,6 +11,12 @@ You can run your application in dev mode that enables live coding using:
 mvn compile quarkus:dev
 ```
 
+Once started, you can access the application by hitting the following URL:
+
+```shell script
+http://localhost:8080/rest/webhook
+```
+
 ## Packaging and running the application
 
 The application can be packaged using:
@@ -68,3 +74,4 @@ and finally it will deploy it to your minikube cluster under the namespace creat
 ```shell script
  ./bin/minikube/deploy.sh
 ```
+> **_NOTE:_**  Default webhook-perf-test URL path is /rest/webhook
