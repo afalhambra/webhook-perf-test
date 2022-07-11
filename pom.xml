@@ -70,6 +70,19 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-jdbc-h2</artifactId>
     </dependency>
+    <!-- K8s dependencies -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-kubernetes</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-container-image-jib</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-minikube</artifactId>
+    </dependency>
     <!-- External dependencies -->
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -171,6 +184,14 @@
       </build>
       <properties>
         <quarkus.package.type>native</quarkus.package.type>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>minikube</id>
+      <properties>
+        <kubernetes.deployment-target>minikube</kubernetes.deployment-target>
+        <quarkus.kubernetes.deploy>true</quarkus.kubernetes.deploy>
       </properties>
     </profile>
   </profiles>
