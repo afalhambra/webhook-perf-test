@@ -1,8 +1,13 @@
 package com.redhat.service.smartevents;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.redhat.service.smartevents.performance.webhook.exceptions.BridgeNotFoundException;
 import com.redhat.service.smartevents.performance.webhook.exceptions.EventNotFoundException;
 import com.redhat.service.smartevents.performance.webhook.models.Event;
 import com.redhat.service.smartevents.performance.webhook.models.WebhookRequest;
@@ -22,6 +27,9 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
 
 @QuarkusTest
 public class WebhookResourceTest {
@@ -31,14 +39,35 @@ public class WebhookResourceTest {
 
     @BeforeEach
     void init() {
-        RestAssured.basePath = "/rest";
+        RestAssured.basePath = "/webhook";
+    }
+
+    @Test
+    void testCountEventsReceived() {
+        Mockito.when(webhookService.countEventsReceived(any()))
+                .thenReturn(0L)
+                .thenReturn(2L);
+
+        Long count = given()
+            .when()
+            .get("/events/bridgeId-3/count")
+            .then().statusCode(HttpStatus.SC_OK)
+            .extract().as(Long.class);
+        assertThat(count, is(0L));
+
+        count = given()
+                .when()
+                .get("/events/bridgeId-1/count")
+                .then().statusCode(HttpStatus.SC_OK)
+                .extract().as(Long.class);
+        assertThat(count, is(2L));
     }
 
     @Test
     void testGetAll() {
         given()
             .when()
-            .get("/webhook")
+            .get("/events")
             .then().statusCode(HttpStatus.SC_OK)
             .body("", hasSize(0));
 
@@ -49,7 +78,7 @@ public class WebhookResourceTest {
 
         String results = given()
                 .when()
-                .get("/webhook")
+                .get("/events")
                 .then().statusCode(HttpStatus.SC_OK)
                 .extract().asString();
 
@@ -58,18 +87,18 @@ public class WebhookResourceTest {
     }
 
     @Test
-    void testGet() throws EventNotFoundException {
+    void testGetEventById() throws EventNotFoundException {
         Event event = new Event().setBridgeId("bridgeId-1");
-        Mockito.when(webhookService.get(1L)).thenThrow(new EventNotFoundException(1L)).thenReturn(event);
+        Mockito.when(webhookService.getEvent(1L)).thenThrow(new EventNotFoundException(1L)).thenReturn(event);
         given()
             .when()
-            .get("/webhook/1")
+            .get("/events/bridgeId-1/1")
             .then()
             .statusCode(HttpStatus.SC_NOT_FOUND);
 
         String result = given()
                 .when()
-                .get("/webhook/1")
+                .get("/events/bridgeId-1/1")
                 .then()
                 .statusCode(HttpStatus.SC_OK)
                 .extract()
@@ -80,24 +109,56 @@ public class WebhookResourceTest {
     }
 
     @Test
+    void testGetEventsByBridgeId() throws BridgeNotFoundException {
+        List<Event> events = new ArrayList<>();
+        events.add(new Event().setBridgeId("bridgeId-1"));
+        events.add(new Event().setBridgeId("bridgeId-1"));
+        Mockito.when(webhookService.getEventsByBridgeId("bridgeId-1")).thenThrow(new BridgeNotFoundException("bridgeId-1")).thenReturn(events);
+        given()
+                .when()
+                .get("/events/bridgeId-1")
+                .then()
+                .statusCode(HttpStatus.SC_NOT_FOUND);
+
+        String result = given()
+                .when()
+                .get("/events/bridgeId-1")
+                .then()
+                .statusCode(HttpStatus.SC_OK)
+                .extract().asString();
+        Event[] resultEvents = Json.decodeValue(result, Event[].class);
+        assertThat(resultEvents, arrayContaining(events.toArray()));
+    }
+
+    @Test
     void testConsumeEvent() {
         Event expectedEvent = new Event();
+        long currentMillis = System.currentTimeMillis();
+        Instant submittedAt = Instant.ofEpochMilli(System.currentTimeMillis());
+        Instant receivedAt = Instant.ofEpochMilli(currentMillis).plusSeconds(5L);
         expectedEvent.setBridgeId("bridgeId-1");
+        expectedEvent.setSubmittedAt(submittedAt);
+        expectedEvent.setReceivedAt(receivedAt);
 
-        Mockito.when(webhookService.create(expectedEvent)).thenReturn(expectedEvent);
+        Mockito.when(webhookService.create(any())).thenReturn(expectedEvent);
 
         WebhookRequest request = new WebhookRequest("bridgeId-1");
+        request.setSubmittedAt(currentMillis);
         String result = given()
                 .when()
                 .body(Json.encode(request))
                 .contentType(ContentType.JSON)
-                .post("/webhook")
+                .post("/events")
                 .then()
                 .statusCode(HttpStatus.SC_CREATED)
                 .extract().asString();
         Event response = Json.decodeValue(result, Event.class);
 
-        assertThat(response, Matchers.is(expectedEvent));
+        assertThat(response.getBridgeId(), is(expectedEvent.getBridgeId()));
+        assertThat(response.getMessage(), nullValue());
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT.withZone(ZoneId.from(ZoneOffset.UTC));
+        assertThat(formatter.format(response.getSubmittedAt()), is(formatter.format(submittedAt)));
+        assertThat(formatter.format(response.getReceivedAt()), is(formatter.format(receivedAt)));
     }
 
     @Test
@@ -109,7 +170,7 @@ public class WebhookResourceTest {
         String result = given()
                 .when()
                 .contentType(ContentType.JSON)
-                .delete("/webhook/1")
+                .delete("/events/1")
                 .then()
                 .statusCode(HttpStatus.SC_OK)
                 .extract().asString();
@@ -124,7 +185,7 @@ public class WebhookResourceTest {
         String result = given()
                 .when()
                 .contentType(ContentType.JSON)
-                .delete("/webhook")
+                .delete("/events")
                 .then()
                 .statusCode(HttpStatus.SC_OK)
                 .extract().asString();
