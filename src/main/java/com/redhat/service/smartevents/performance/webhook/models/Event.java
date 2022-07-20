@@ -1,5 +1,7 @@
 package com.redhat.service.smartevents.performance.webhook.models;
 
+import java.time.Instant;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -8,6 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import lombok.EqualsAndHashCode;
@@ -32,16 +35,26 @@ public class Event extends PanacheEntityBase {
     private Long id;
 
     @NotBlank
+    @NotNull
     @Column(name = "bridgeId")
     private String bridgeId;
 
-    @NotBlank
     @Column(name = "message")
     private String message;
+
+    @NotBlank
+    @NotNull
+    @Column(name = "created_at")
+    private Instant submittedAt;
+
+    @Column(name = "received_at")
+    private Instant receivedAt;
 
     public Event copy(Event plan) {
         this.bridgeId = plan.bridgeId;
         this.message = plan.message;
+        this.submittedAt = plan.submittedAt;
+        this.receivedAt = plan.receivedAt;
         return this;
     }
 }
