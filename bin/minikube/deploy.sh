@@ -13,4 +13,4 @@ mvn \
 
 kubectl wait deployment --all --timeout=600s --for=condition=Available -n performance
 
-echo "Application is now available in minikube at" $(minikube service -n performance --url webhook-perf-test)"/rest/webhook"
+echo "Application is now available in minikube at" $(minikube service -n performance --url webhook-perf-test)"/webhook/events"

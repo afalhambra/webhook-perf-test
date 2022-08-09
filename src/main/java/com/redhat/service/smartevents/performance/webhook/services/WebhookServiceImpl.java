@@ -6,8 +6,10 @@ import java.util.Optional;
 import javax.enterprise.context.ApplicationScoped;
 import javax.transaction.Transactional;
 
+import com.redhat.service.smartevents.performance.webhook.exceptions.BridgeNotFoundException;
 import com.redhat.service.smartevents.performance.webhook.exceptions.EventNotFoundException;
 import com.redhat.service.smartevents.performance.webhook.models.Event;
+import io.quarkus.panache.common.Parameters;
 import lombok.extern.slf4j.Slf4j;
 
 @ApplicationScoped
@@ -16,36 +18,39 @@ public class WebhookServiceImpl implements WebhookService {
 
     @Override
     public List<Event> findAll() {
-        return Event.findAll().list();
+        return Event.listAll();
     }
 
     @Override
-    public Event get(Long id) throws EventNotFoundException {
+    public Event getEvent(Long id) throws EventNotFoundException {
         Optional<Event> event = Event.findByIdOptional(id);
         return event.orElseThrow(() -> new EventNotFoundException(id));
+    }
+
+    @Override
+    public List<Event> getEventsByBridgeId(String bridgeId) throws BridgeNotFoundException {
+        List<Event> events = Event.list("bridgeId = :bridgeId", Parameters.with("bridgeId", bridgeId));
+        return Optional.ofNullable(events).orElseThrow(() -> new BridgeNotFoundException(bridgeId));
     }
 
     @Override
     @Transactional
     public Event create(Event event) {
         event.persist();
-        log.info("event persisted {}", event.getId());
+        log.info("event persisted with id {}", event.getId());
         return event;
     }
 
     @Override
-    @Transactional
-    public Event update(Long id, Event event) throws EventNotFoundException {
-        Event current = get(id);
-        current.copy(event).persist();
-        log.info("event updated {}", event.getId());
-        return current;
+    public Long countEventsReceived(String bridgeId) {
+        return Event.count("bridgeId = :bridgeId",
+                           Parameters.with("bridgeId", bridgeId));
     }
 
     @Override
     @Transactional
     public Event delete(Long id) throws EventNotFoundException {
-        Event event = get(id);
+        Event event = getEvent(id);
         event.delete();
         log.info("event deleted {}", event.getId());
         return event;

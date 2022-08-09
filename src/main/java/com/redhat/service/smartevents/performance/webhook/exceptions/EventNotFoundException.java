@@ -1,6 +1,6 @@
 package com.redhat.service.smartevents.performance.webhook.exceptions;
 
-public class EventNotFoundException extends Exception{
+public class EventNotFoundException extends Exception {
 
     private static final long serialVersionUID = 2319415509210342979L;
 
