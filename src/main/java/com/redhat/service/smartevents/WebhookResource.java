@@ -77,7 +77,7 @@ public class WebhookResource {
     @POST
     public Response consumeEvent(WebhookRequest request) {
         log.info("request received {}", request);
-        if (request.getSubmittedAt() != null) {
+        if (request.getBridgeId() != null && !request.getBridgeId().isEmpty()) {
             Event event = webhookService.create(request.toEntity());
             log.info("new event created {}", event);
             return Response.status(CREATED).entity(event).build();

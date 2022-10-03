@@ -1,6 +1,6 @@
 package com.redhat.service.smartevents.performance.webhook.models;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -45,10 +45,10 @@ public class Event extends PanacheEntityBase {
     @NotBlank
     @NotNull
     @Column(name = "created_at")
-    private Instant submittedAt;
+    private ZonedDateTime submittedAt;
 
     @Column(name = "received_at")
-    private Instant receivedAt;
+    private ZonedDateTime receivedAt;
 
     public Event copy(Event plan) {
         this.bridgeId = plan.bridgeId;
