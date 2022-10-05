@@ -3,6 +3,7 @@ package com.redhat.service.smartevents;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -133,9 +134,8 @@ public class WebhookResourceTest {
     @Test
     void testConsumeEvent() {
         Event expectedEvent = new Event();
-        long currentMillis = System.currentTimeMillis();
-        Instant submittedAt = Instant.ofEpochMilli(System.currentTimeMillis());
-        Instant receivedAt = Instant.ofEpochMilli(currentMillis).plusSeconds(5L);
+        ZonedDateTime submittedAt = ZonedDateTime.now(ZoneOffset.UTC);
+        ZonedDateTime receivedAt = ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(5L);
         expectedEvent.setBridgeId("bridgeId-1");
         expectedEvent.setSubmittedAt(submittedAt);
         expectedEvent.setReceivedAt(receivedAt);
@@ -143,11 +143,12 @@ public class WebhookResourceTest {
         Mockito.when(webhookService.create(any())).thenReturn(expectedEvent);
 
         WebhookRequest request = new WebhookRequest("bridgeId-1");
-        request.setSubmittedAt(currentMillis);
+        request.setSubmittedAt(submittedAt);
         String result = given()
                 .when()
                 .body(Json.encode(request))
                 .contentType(ContentType.JSON)
+                .log().all()
                 .post("/events")
                 .then()
                 .statusCode(HttpStatus.SC_CREATED)

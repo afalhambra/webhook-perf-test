@@ -1,10 +1,12 @@
 package com.redhat.service.smartevents.performance.webhook.models;
 
-import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,8 +25,9 @@ public class WebhookRequest {
     private String message;
 
     @NotNull(message = "submitted_at cannot be null")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ")
     @JsonProperty("submitted_at")
-    private Long submittedAt;
+    private ZonedDateTime submittedAt;
 
     public WebhookRequest() {
     }
@@ -41,8 +44,8 @@ public class WebhookRequest {
         Event event = new Event();
         event.setBridgeId(bridgeId);
         event.setMessage(message);
-        event.setReceivedAt(Instant.now());
-        event.setSubmittedAt(Instant.ofEpochMilli(submittedAt));
+        event.setReceivedAt(ZonedDateTime.now(ZoneOffset.UTC));
+        event.setSubmittedAt(submittedAt);
         return event;
     }
 
